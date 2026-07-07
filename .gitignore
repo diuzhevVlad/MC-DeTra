@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.envrc
+*.pt
+*.pth
+/runs/
+/checkpoints/
+/preds*.npz
+*.egg-info/
+.DS_Store

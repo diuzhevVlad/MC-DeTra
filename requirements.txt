@@ -1,0 +1,55 @@
+# DeTra-repro unified environment: direct dependencies (human-editable).
+#
+# ONE env runs every pipeline stage: preprocessing (Waymo TFRecord parse),
+# training (torch+CUDA), detection AP (Waymo metric op), forecasting (av2), and
+# visualization. The historical trajpred/trajflow/mtr/waymo split was NOT
+# fundamental: the only hard constraint is keeping numpy < 1.24 so tensorflow
+# 2.12 and the compiled Waymo metric op load, while av2 stays happy.
+#
+# For an EXACT reproduction use requirements-lock.txt (full transitive pins).
+# This file lists only the load-bearing direct pins and WHY each is fixed.
+# Install on python 3.10 only. See docs/environment.md and scripts/setup_env.sh.
+
+# --- Deep learning (training) -------------------------------------------------
+# torch 2.2.0 ships the cu121 build on PyPI and is the version proven to load the
+# Waymo custom TF op in the same process. Newer torch (2.5.x) is what ABI-broke
+# the local trajpred env, so do not bump without re-validating the metric op.
+torch==2.2.0
+torchvision==0.17.0
+torchaudio==2.2.0
+
+# --- Waymo: preprocessing + official detection AP -----------------------------
+# waymo-open-dataset-tf-2-12-0 pins tensorflow==2.12.0, protobuf 3.20.x, and
+# numpy<1.24. Its metric op is a compiled TF custom op; it needs the conda-forge
+# libstdcxx runtime (see environment.yml) and tf 2.12 in-process.
+tensorflow==2.12.0
+waymo-open-dataset-tf-2-12-0==1.6.4
+protobuf==3.20.3
+
+# --- numpy: the binding constraint -------------------------------------------
+# tensorflow 2.12 requires numpy<1.24. Everything else must tolerate this; the
+# av2 stack does ONLY when numba is held back (below). Never let a transitive
+# resolve upgrade numpy to 2.x.
+numpy==1.23.0
+scipy==1.13.1
+
+# --- Argoverse 2: forecasting metrics ----------------------------------------
+# av2 0.3.6 pulls numba, and modern numba forces numpy>=2 (which breaks tf). Pin
+# numba 0.60.0 / llvmlite 0.43.0: the newest pair that still allows numpy<2.
+av2==0.3.6
+numba==0.60.0
+llvmlite==0.43.0
+av==17.1.0
+pyarrow==10.0.0
+polars==1.42.0
+opencv-python==4.11.0.86
+kornia==0.8.2
+pyproj==3.7.1
+
+# --- Visualization (tools/) ---------------------------------------------------
+matplotlib==3.6.1
+imageio==2.37.3
+Pillow==9.2.0
+
+# --- Experiment logging (optional, lazy-imported) -----------------------------
+comet_ml==3.58.3
